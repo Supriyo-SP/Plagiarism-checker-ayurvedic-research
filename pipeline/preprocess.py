@@ -19,17 +19,28 @@ def normalize_text(text):
     return text
 
 def remove_references(text):
-    """Attempt to find and remove references/bibliography sections."""
-    # Common headers for references
-    ref_patterns = [
-        r"\nreferences\s*\n",
-        r"\nbibliography\s*\n",
-        r"\nreferences\n"
-    ]
-    for pattern in ref_patterns:
-        match = re.search(pattern, text, flags=re.IGNORECASE)
-        if match:
-            return text[:match.start()]
+    """Attempt to find and remove references/bibliography sections robustly."""
+    # Using MULTILINE so ^ matches the start of any line, allowing optional numbering (e.g. "7. References")
+    pattern = r"^(?:\d+\.?\s*)?(?:REFERENCES?|BIBLIOGRAPHY)\s*$"
+    
+    # Find all possible matches for the references header
+    matches = list(re.finditer(pattern, text, flags=re.IGNORECASE | re.MULTILINE))
+    
+    if matches:
+        # Common issue: 'References' could be mentioned in the abstract or table of contents.
+        # We only want the actual references section which typically appears in the last half of the document.
+        for m in reversed(matches):
+            if m.start() > len(text) * 0.4:
+                return text[:m.start()]
+                
+    # Fallback: occasionally PDF parsers drop the newlines and we just get "\n References \n"
+    fallback_pattern = r"\n\s*(?:REFERENCES?|BIBLIOGRAPHY)\s*\n"
+    matches_fb = list(re.finditer(fallback_pattern, text, flags=re.IGNORECASE))
+    if matches_fb:
+        for m in reversed(matches_fb):
+            if m.start() > len(text) * 0.4:
+                return text[:m.start()]
+
     return text
 
 def section_split(text):

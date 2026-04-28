@@ -67,7 +67,17 @@ class PlagiarismDetector:
             })
             
         max_semantic = max(sem_scores[0]) if len(sem_scores[0]) > 0 else 0
-        overall_score = min(100, max_semantic * 100)
+        
+        # Adjusting the raw cosine similarity into a 0-100% "severity" scale.
+        # all-MiniLM-L6-v2 typically scores ~0.1 - 0.4 for completely unrelated text.
+        # We treat < 0.45 as 0% plagiarism.
+        if max_semantic < 0.45:
+            overall_score = 0.0
+        else:
+            overall_score = min(100.0, ((max_semantic - 0.45) / 0.50) * 100.0)
+            
+        # Filter out noisy, unrelated semantic matches from muddying the results
+        results = [r for r in results if (r["type"] == "Semantic" and r["score"] >= 0.45) or (r["type"] == "Lexical")]
         
         # Return top matches, sorted by semantic score for simplicity
         sorted_semantic = [r for r in results if r["type"] == "Semantic"]
