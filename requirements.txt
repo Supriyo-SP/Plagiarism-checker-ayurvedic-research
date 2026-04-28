@@ -1,6 +1,7 @@
 requests
 pdfplumber
 sentence-transformers
+torchvision
 faiss-cpu
 rank-bm25
 streamlit
