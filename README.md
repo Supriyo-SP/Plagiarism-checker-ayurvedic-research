@@ -1,6 +1,11 @@
-# Ayurvedic Plagiarism Checker 🌿
+# Ayurvedic Plagiarism Checker [v3.0] 🌿
 
 An AI-powered Plagiarism Detection Tool specifically tailored for Ayurvedic Research Articles. It combines semantic search (using Sentence Transformers) and lexical overlap (using BM25) to detect both exact copying and heavy paraphrasing. 
+
+## Version History
+- **v1**: Initial implementation (BM25 + Semantic Search pipeline).
+- **v2**: Calibrated semantic scaling (adjusting `all-MiniLM-L6-v2` baseline noise to fix 50% false positives).
+- **v3**: Robust regex improvements to automatically strip unstructured "References" sections natively, plus a high-visibility Electric Lime Tech-Core UI.
 
 ## Features
 - **Dual Similarity Engine:** Employs BM25 for strict lexical overlapping and `all-MiniLM-L6-v2` for semantic similarities.

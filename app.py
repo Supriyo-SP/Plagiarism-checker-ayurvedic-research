@@ -10,13 +10,97 @@ st.set_page_config(page_title="Ayurvedic Plagiarism Checker", layout="wide", pag
 def load_detector():
     base_dir = os.path.dirname(__file__)
     index_dir = os.path.join(base_dir, "data", "index")
+    
+    # Cold-start Deployment Fix: Bootstrap data if it doesn't exist
     if not os.path.exists(os.path.join(index_dir, "vector.index")):
-        return None
+        with st.spinner("Initializing AI Core... Building FAISS Semantic Index (This only happens once on deployment)..."):
+            import subprocess
+            # If no data exists at all, generate the baseline mock dataset
+            if not os.path.exists(os.path.join(base_dir, "data", "texts")):
+                subprocess.run(["python", "pipeline/mock_texts.py"], check=True)
+            # Preprocess the data into canonical chunks
+            subprocess.run(["python", "pipeline/preprocess.py"], check=True)
+            # Build embeddings and FAISS/BM25 indexes
+            subprocess.run(["python", "pipeline/index.py"], check=True)
+            
+            st.success("✅ AI Engine Initialized!")
+            # Streamlit rerun is not needed because it will just fall through and load the detector below
+            
+    from pipeline.similarity import PlagiarismDetector
     return PlagiarismDetector(index_dir)
 
 def main():
-    st.markdown("<h1 style='text-align: center; color: #2E8B57;'>🌿 Ayurvedic Plagiarism Checker</h1>", unsafe_allow_html=True)
-    st.write("Detect potential plagiarism or paraphrasing in Ayurvedic research texts using semantic embeddings and lexical overlap.")
+    # Inject Custom Tech Core CSS
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+    
+    /* Background and fonts */
+    .stApp {
+        background-color: #050505;
+    }
+    html, body, [class*="css"]  {
+        font-family: 'Share Tech Mono', monospace !important;
+        color: #a0a0a0;
+    }
+    
+    /* Electric Lime Accents for Headers */
+    h1, h2, h3, h4, h5, p {
+        color: #ccff00 !important;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    /* Metric Score Text */
+    div[data-testid="stMetricValue"] {
+        color: #ccff00 !important;
+        text-shadow: 0 0 10px rgba(204, 255, 0, 0.4);
+    }
+    
+    /* Primary buttons */
+    .stButton>button {
+        background-color: #050505;
+        color: #ccff00;
+        border: 1px solid #ccff00;
+        box-shadow: 0 0 5px rgba(204,255,0,0.5);
+        border-radius: 0;
+        transition: 0.2s all ease-in-out;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    .stButton>button:hover {
+        background-color: #ccff00;
+        color: #000;
+        box-shadow: 0 0 15px rgba(204,255,0,0.8);
+    }
+    
+    /* Text Area Override */
+    .stTextArea textarea {
+        background-color: #111 !important;
+        color: #a0a0a0 !important;
+        border: 1px solid #333 !important;
+        border-radius: 2px;
+        font-family: 'Share Tech Mono', monospace !important;
+    }
+    .stTextArea textarea:focus {
+        border: 1px solid #ccff00 !important;
+        box-shadow: 0 0 5px rgba(204,255,0,0.5);
+        color: #ccff00 !important;
+    }
+    
+    /* Dashboard Expanders */
+    div[data-testid="stExpander"] {
+        border-color: #333 !important;
+        background-color: #0a0a0a;
+    }
+    
+    /* Decorative UI Elements */
+    hr {
+        border-color: #333 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<h1 style='text-align: center; text-transform: uppercase;'>[ Ayurvedic Plagiarism Engine // v3.0 ]</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #777 !important;'>Semantic + Lexical Signal Detection Grid</p><hr/>", unsafe_allow_html=True)
     
     detector = load_detector()
     
