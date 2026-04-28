@@ -14,14 +14,23 @@ def load_detector():
     # Cold-start Deployment Fix: Bootstrap data if it doesn't exist
     if not os.path.exists(os.path.join(index_dir, "vector.index")):
         with st.spinner("Initializing AI Core... Building FAISS Semantic Index (This only happens once on deployment)..."):
-            import subprocess
+            # Direct imports instead of subprocess to prevent pathing issues and RAM spikes on Cloud
+            from pipeline.mock_texts import generate as generate_mocks
+            from pipeline.preprocess import process_all
+            from pipeline.index import build_index
+            
+            texts_dir = os.path.join(base_dir, "data", "texts")
+            chunks_file = os.path.join(base_dir, "data", "chunks.json")
+            
             # If no data exists at all, generate the baseline mock dataset
-            if not os.path.exists(os.path.join(base_dir, "data", "texts")):
-                subprocess.run(["python", "pipeline/mock_texts.py"], check=True)
+            if not os.path.exists(texts_dir):
+                generate_mocks()
+                
             # Preprocess the data into canonical chunks
-            subprocess.run(["python", "pipeline/preprocess.py"], check=True)
+            process_all(texts_dir, chunks_file)
+            
             # Build embeddings and FAISS/BM25 indexes
-            subprocess.run(["python", "pipeline/index.py"], check=True)
+            build_index(chunks_file, index_dir)
             
             st.success("✅ AI Engine Initialized!")
             # Streamlit rerun is not needed because it will just fall through and load the detector below
