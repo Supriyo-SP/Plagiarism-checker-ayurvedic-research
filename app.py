@@ -14,8 +14,6 @@ def load_detector():
     # Cold-start Deployment Fix: Bootstrap data if it doesn't exist
     if not os.path.exists(os.path.join(index_dir, "vector.index")):
         with st.spinner("Initializing AI Core... Building FAISS Semantic Index (This only happens once on deployment)..."):
-            # Direct imports instead of subprocess to prevent pathing issues and RAM spikes on Cloud
-            from pipeline.mock_texts import generate as generate_mocks
             from pipeline.extract import extract_all
             from pipeline.preprocess import process_all
             from pipeline.index import build_index
@@ -24,10 +22,6 @@ def load_detector():
             texts_dir = os.path.join(base_dir, "data", "texts")
             chunks_file = os.path.join(base_dir, "data", "chunks.json")
             
-            # If no data exists at all, generate the baseline mock dataset
-            if not os.path.exists(texts_dir):
-                generate_mocks()
-                
             # Automatically extract raw text from any PDFs uploaded to the corpus
             if os.path.exists(pdf_dir):
                 extract_all(pdf_dir, texts_dir)
