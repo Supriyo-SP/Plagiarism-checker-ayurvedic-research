@@ -70,29 +70,30 @@ def main():
         background-color: #050505;
         color: #ccff00;
         border: 1px solid #ccff00;
-        box-shadow: 0 0 5px rgba(204,255,0,0.5);
+        box-shadow: 0 0 4px rgba(204,255,0,0.3);
         border-radius: 0;
-        transition: 0.2s all ease-in-out;
+        transition: 0.3s all ease-in-out;
         font-family: 'Share Tech Mono', monospace;
     }
     .stButton>button:hover {
-        background-color: #ccff00;
-        color: #000;
-        box-shadow: 0 0 15px rgba(204,255,0,0.8);
+        background-color: rgba(204, 255, 0, 0.1);
+        color: #e6ff66;
+        border-color: #e6ff66;
+        box-shadow: 0 0 10px rgba(204,255,0,0.5);
     }
     
     /* Text Area Override */
     .stTextArea textarea {
         background-color: #111 !important;
-        color: #a0a0a0 !important;
+        color: #ffffff !important;
         border: 1px solid #333 !important;
         border-radius: 2px;
         font-family: 'Share Tech Mono', monospace !important;
     }
     .stTextArea textarea:focus {
         border: 1px solid #ccff00 !important;
-        box-shadow: 0 0 5px rgba(204,255,0,0.5);
-        color: #ccff00 !important;
+        box-shadow: 0 0 5px rgba(204,255,0,0.3);
+        color: #ffffff !important;
     }
     
     /* Dashboard Expanders */

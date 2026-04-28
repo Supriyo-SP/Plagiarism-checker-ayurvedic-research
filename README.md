@@ -4,8 +4,8 @@ An AI-powered Plagiarism Detection Tool specifically tailored for Ayurvedic Rese
 
 ## Version History
 - **v1**: Initial implementation (BM25 + Semantic Search pipeline).
-- **v2**: Calibrated semantic scaling (adjusting `all-MiniLM-L6-v2` baseline noise to fix 50% false positives).
-- **v3**: Robust regex improvements to automatically strip unstructured "References" sections natively, plus a high-visibility Electric Lime Tech-Core UI.
+- **v2**: Calibrated semantic scaling (adjusting `all-MiniLM-L6-v2` baseline noise to fix false positives).
+- **v3**: Stable & Working Perfectly. Robust regex improvements to automatically strip unstructured "References" sections natively, plus a high-visibility Electric Lime Tech-Core UI.
 
 ## Features
 - **Dual Similarity Engine:** Employs BM25 for strict lexical overlapping and `all-MiniLM-L6-v2` for semantic similarities.
@@ -48,8 +48,14 @@ An AI-powered Plagiarism Detection Tool specifically tailored for Ayurvedic Rese
 
 5. **Run the Application:**
    ```bash
-   streamlit run app.py
+   python -m streamlit run app.py
    ```
+
+## Adding More PDFs to the Corpus
+To expand your database with new papers:
+1. Drop the new `.pdf` files directly into the `data/pdfs/` folder.
+2. Delete the old `data/index/vector.index` file (this forces the system to perform a "cold start" and re-evaluate everything).
+3. Restart the Streamlit app. It will automatically detect the missing index, extract the text from the new PDFs, chunk them, and add them to the AI index!
 
 ## Tech Stack
 - **Python Backend:** Core logic
