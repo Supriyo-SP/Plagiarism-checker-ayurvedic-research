@@ -3,6 +3,7 @@ import json
 import faiss
 import numpy as np
 import pickle
+import difflib
 from sentence_transformers import SentenceTransformer
 from rank_bm25 import BM25Okapi
 
@@ -89,6 +90,37 @@ class PlagiarismDetector:
             fingerprint = f"{r['source']}_{r['text'][:20]}"
             if fingerprint not in seen:
                 seen.add(fingerprint)
+                
+                # Calculate new metrics for the UI
+                q_words = query_text.lower().split()
+                t_words = r["text"].lower().split()
+                
+                if q_words and t_words:
+                    matcher = difflib.SequenceMatcher(None, q_words, t_words)
+                    match = matcher.find_longest_match(0, len(q_words), 0, len(t_words))
+                    
+                    consecutive_pct = (match.size / len(q_words)) * 100.0
+                    longest_match_words = q_words[match.a : match.a + match.size]
+                    exact_match_str = " ".join(longest_match_words)
+                    
+                    matching_blocks = matcher.get_matching_blocks()
+                    exact_words = sum(block.size for block in matching_blocks if block.size >= 3)
+                    exact_match_pct = (exact_words / len(q_words)) * 100.0
+                else:
+                    consecutive_pct = 0.0
+                    exact_match_str = ""
+                    exact_match_pct = 0.0
+                    
+                if r["type"] == "Semantic":
+                    sim_pct = max(0.0, min(100.0, ((r["score"] - 0.45) / 0.50) * 100.0))
+                else:
+                    sim_pct = min(100.0, (r["score"] / 20.0) * 100.0)
+                    
+                r["consecutive_percentage"] = consecutive_pct
+                r["exact_match"] = exact_match_str
+                r["exact_match_percentage"] = exact_match_pct
+                r["similarity_percentage"] = sim_pct
+                
                 top_matches.append(r)
                 
         return {

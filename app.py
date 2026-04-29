@@ -109,7 +109,7 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<h1 style='text-align: center; text-transform: uppercase;'>[ Ayurvedic Plagiarism Engine // v3.0 ]</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; text-transform: uppercase;'>[ Ayurvedic Plagiarism Engine // v4.0 ]</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #777 !important;'>Semantic + Lexical Signal Detection Grid</p><hr/>", unsafe_allow_html=True)
     
     detector = load_detector()
@@ -117,6 +117,28 @@ def main():
     if detector is None:
         st.warning("⚠️ Index not found. Please run the indexing pipeline first.")
         return
+
+    # Add Sidebar for Rebuilding Index
+    st.sidebar.markdown("## System Controls")
+    if st.sidebar.button("Rebuild Database", help="Use this if you added new PDFs to the data/pdfs folder", type="primary", use_container_width=True):
+        with st.spinner("Rebuilding FAISS and BM25 Indexes from PDFs..."):
+            base_dir = os.path.dirname(__file__)
+            index_dir = os.path.join(base_dir, "data", "index")
+            pdf_dir = os.path.join(base_dir, "data", "pdfs")
+            texts_dir = os.path.join(base_dir, "data", "texts")
+            chunks_file = os.path.join(base_dir, "data", "chunks.json")
+            
+            from pipeline.extract import extract_all
+            from pipeline.preprocess import process_all
+            from pipeline.index import build_index
+            
+            extract_all(pdf_dir, texts_dir)
+            process_all(texts_dir, chunks_file)
+            build_index(chunks_file, index_dir)
+            
+            st.sidebar.success("Database Rebuilt Successfully!")
+            st.cache_resource.clear()
+            st.rerun()
         
     st.markdown("### Submission Input")
     input_method = st.radio("Choose input method:", ("Plain Text", "PDF Upload"))
@@ -178,8 +200,17 @@ def main():
                 st.info("No substantial matches found in the corpus.")
             else:
                 for match in res["top_matches"]:
-                    with st.expander(f"📄 Source: {match['source']} | Match: {match['type']} | Score: {match['score']:.2f}"):
+                    with st.expander(f"📄 Source: {match['source']} | Match: {match['type']} | Sim: {match['similarity_percentage']:.1f}%"):
                         st.markdown(f"**Section Matched:** {match['section']}")
+                        
+                        col_m1, col_m2, col_m3 = st.columns(3)
+                        col_m1.metric("Similarity", f"{match['similarity_percentage']:.1f}%")
+                        col_m2.metric("Exact Match", f"{match['exact_match_percentage']:.1f}%")
+                        col_m3.metric("Consecutive Match", f"{match['consecutive_percentage']:.1f}%")
+                        
+                        if match['exact_match'] and len(match['exact_match'].split()) >= 3:
+                            st.markdown(f"**Longest Exact Match Segment:**\n> {match['exact_match']}")
+                            
                         st.markdown(f"**Overlapping Context:**\n> {match['text']}")
                         
         st.info("💡 **How it works:** Dual-engine architecture. **Semantic Search** captures paraphrased ideas using sentence-transformers, while **Lexical BM25 Search** catches direct copy-pasting.")
