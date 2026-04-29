@@ -45,7 +45,7 @@ venv.bak/
 # Project specific ignores (Data, Models, Indexes)
 data/index/
 data/texts/
-data/chunks.json
+data/pdfs/
 
 # OS generated files
 .DS_Store
