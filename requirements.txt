@@ -6,3 +6,4 @@ faiss-cpu
 rank-bm25
 streamlit
 beautifulsoup4
+pytest

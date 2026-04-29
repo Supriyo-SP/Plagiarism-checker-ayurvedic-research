@@ -32,8 +32,11 @@ def load_detector():
             # Build embeddings and FAISS/BM25 indexes
             build_index(chunks_file, index_dir)
             
+            if not os.path.exists(os.path.join(index_dir, "vector.index")):
+                st.warning("⚠️ Corpus is empty. Please add PDFs to the data/pdfs directory and click Rebuild Database.")
+                return None
+                
             st.success("✅ AI Engine Initialized!")
-            # Streamlit rerun is not needed because it will just fall through and load the detector below
             
     from pipeline.similarity import PlagiarismDetector
     return PlagiarismDetector(index_dir)
@@ -167,12 +170,18 @@ def main():
                 st.error("Failed to extract text from PDF.")
                 
     if st.button("🔍 Check Plagiarism", type="primary", use_container_width=True):
-        if len(query_text.split()) < 10:
+        words = query_text.split()
+        if len(words) < 10:
             st.error("Please enter at least 10 words to analyze.")
             return
             
+        # Enforce a 1000-word limit for performance (can be increased)
+        if len(words) > 1000:
+            st.warning(f"⚠️ Text truncated to 1000 words for performance (Original: {len(words)} words).")
+            query_text = " ".join(words[:1000])
+            
         with st.spinner("Analyzing against Ayurvedic Database (This may take a moment for large PDFs)..."):
-            res = detector.detect(query_text) # Analyze the whole document instead of truncating
+            res = detector.detect(query_text)
             
         score = res["overall_score"]
         

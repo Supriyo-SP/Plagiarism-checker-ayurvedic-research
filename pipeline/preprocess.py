@@ -15,7 +15,8 @@ def normalize_text(text):
     """Lowercase and simple unicode normalization."""
     text = text.lower()
     for term, canonical in CANONICAL_TERMS.items():
-        text = text.replace(term, canonical)
+        pattern = r'\b' + re.escape(term) + r'\b'
+        text = re.sub(pattern, canonical, text)
     return text
 
 def remove_references(text):

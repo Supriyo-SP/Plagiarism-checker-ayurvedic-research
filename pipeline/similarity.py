@@ -11,23 +11,18 @@ class PlagiarismDetector:
     def __init__(self, index_dir):
         self.index_dir = index_dir
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
-        self.faiss_index = faiss.read_index(os.path.join(index_dir, "vector.index"))
         
-        with open(os.path.join(index_dir, "bm25.pkl"), "rb") as f:
-            self.bm25 = pickle.load(f)
-            
-        with open(os.path.join(index_dir, "metadata.json"), "r", encoding="utf-8") as f:
-            self.metadata = json.load(f)
-            
-        # Section weights
-        self.weights = {
-            "Abstract": 0.2,
-            "Methods": 0.4,
-            "Results": 0.3,
-            "Discussion": 0.3,
-            "Body": 0.3, # Fallback
-            "Conclusion": 0.1
-        }
+        try:
+            self.faiss_index = faiss.read_index(os.path.join(index_dir, "vector.index"))
+            with open(os.path.join(index_dir, "bm25.pkl"), "rb") as f:
+                self.bm25 = pickle.load(f)
+            with open(os.path.join(index_dir, "metadata.json"), "r", encoding="utf-8") as f:
+                self.metadata = json.load(f)
+        except Exception as e:
+            print(f"Warning: Failed to load index data: {e}")
+            self.metadata = []
+            self.faiss_index = None
+            self.bm25 = None
         
     def detect(self, query_text):
         if not self.metadata:
@@ -51,7 +46,7 @@ class PlagiarismDetector:
             return {"overall_score": 0, "top_matches": []}
             
         all_results = []
-        max_semantic_overall = 0.0
+        max_score_overall = 0.0
         
         # We will keep track of how many chunks are highly plagiarized for a better overall score
         highly_plagiarized_chunks = 0
@@ -65,16 +60,24 @@ class PlagiarismDetector:
             sem_scores, sem_indices = self.faiss_index.search(query_embedding, k)
             
             chunk_max_sem = max(sem_scores[0]) if len(sem_scores[0]) > 0 else 0
-            if chunk_max_sem > max_semantic_overall:
-                max_semantic_overall = chunk_max_sem
-                
-            if chunk_max_sem > 0.85: # Threshold for high confidence plagiarism
-                highly_plagiarized_chunks += 1
             
             # 2. Lexical Search (BM25)
             tokenized_query = q_chunk.lower().split()
             bm25_scores = self.bm25.get_scores(tokenized_query)
             top_k_bm25 = np.argsort(bm25_scores)[::-1][:k]
+            
+            chunk_max_lex = max(bm25_scores) if len(bm25_scores) > 0 else 0
+            
+            # Normalize BM25 assuming ~30.0 is a very high match
+            norm_lex = min(1.0, chunk_max_lex / 30.0)
+            
+            # Blend lexical and semantic
+            chunk_overall = max(chunk_max_sem, norm_lex)
+            if chunk_overall > max_score_overall:
+                max_score_overall = chunk_overall
+                
+            if chunk_overall > 0.85: # Threshold for high confidence plagiarism
+                highly_plagiarized_chunks += 1
             
             for idx in top_k_bm25:
                 if bm25_scores[idx] > 0:
@@ -99,16 +102,15 @@ class PlagiarismDetector:
                     "q_chunk": q_chunk
                 })
                 
-        # If the document is large, overall_score can be a mix of max similarity and chunk coverage
-        # But to ensure an exact uploaded PDF gives 100%, we primarily look at max_semantic_overall
-        if max_semantic_overall < 0.45:
+        # To ensure an exact uploaded PDF gives 100%, we look at max_score_overall
+        if max_score_overall < 0.45:
             overall_score = 0.0
         else:
             # Scale 0.45 -> 1.0 to 0 -> 100%
-            overall_score = min(100.0, ((max_semantic_overall - 0.45) / 0.50) * 100.0)
+            overall_score = min(100.0, ((max_score_overall - 0.45) / 0.55) * 100.0)
             
         # Filter out noisy matches
-        filtered_results = [r for r in all_results if (r["type"] == "Semantic" and r["score"] >= 0.45) or (r["type"] == "Lexical")]
+        filtered_results = [r for r in all_results if (r["type"] == "Semantic" and r["score"] >= 0.45) or (r["type"] == "Lexical" and r["score"] >= 5.0)]
         
         # Sort by semantic score
         sorted_semantic = sorted([r for r in filtered_results if r["type"] == "Semantic"], key=lambda x: x["score"], reverse=True)
@@ -143,9 +145,9 @@ class PlagiarismDetector:
                     exact_match_pct = 0.0
                     
                 if r["type"] == "Semantic":
-                    sim_pct = max(0.0, min(100.0, ((r["score"] - 0.45) / 0.50) * 100.0))
+                    sim_pct = max(0.0, min(100.0, ((r["score"] - 0.45) / 0.55) * 100.0))
                 else:
-                    sim_pct = min(100.0, (r["score"] / 20.0) * 100.0)
+                    sim_pct = min(100.0, (r["score"] / 30.0) * 100.0)
                     
                 r["consecutive_percentage"] = consecutive_pct
                 r["exact_match"] = exact_match_str
