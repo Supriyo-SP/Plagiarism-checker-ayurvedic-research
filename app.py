@@ -171,8 +171,8 @@ def main():
             st.error("Please enter at least 10 words to analyze.")
             return
             
-        with st.spinner("Analyzing against Ayurvedic Database..."):
-            res = detector.detect(query_text[:5000]) # analyzing up to 5000 chars for demo
+        with st.spinner("Analyzing against Ayurvedic Database (This may take a moment for large PDFs)..."):
+            res = detector.detect(query_text) # Analyze the whole document instead of truncating
             
         score = res["overall_score"]
         
