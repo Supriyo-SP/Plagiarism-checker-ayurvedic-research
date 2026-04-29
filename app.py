@@ -115,13 +115,7 @@ def main():
     st.markdown("<h1 style='text-align: center; text-transform: uppercase;'>[ Ayurvedic Plagiarism Engine // v4.0 ]</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #777 !important;'>Semantic + Lexical Signal Detection Grid</p><hr/>", unsafe_allow_html=True)
     
-    detector = load_detector()
-    
-    if detector is None:
-        st.warning("⚠️ Index not found. Please run the indexing pipeline first.")
-        return
-
-    # Add Sidebar for Rebuilding Index
+    # Add Sidebar for Rebuilding Index (Must be placed before detector check so it is always accessible)
     st.sidebar.markdown("## System Controls")
     if st.sidebar.button("Rebuild Database", help="Use this if you added new PDFs to the data/pdfs folder", type="primary", use_container_width=True):
         with st.spinner("Rebuilding FAISS and BM25 Indexes from PDFs..."):
@@ -142,6 +136,12 @@ def main():
             st.sidebar.success("Database Rebuilt Successfully!")
             st.cache_resource.clear()
             st.rerun()
+            
+    detector = load_detector()
+    
+    if detector is None:
+        # Warning is already displayed natively inside load_detector()
+        return
         
     st.markdown("### Submission Input")
     input_method = st.radio("Choose input method:", ("Plain Text", "PDF Upload"))
