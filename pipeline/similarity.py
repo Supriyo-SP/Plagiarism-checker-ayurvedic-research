@@ -66,17 +66,10 @@ class PlagiarismDetector:
             bm25_scores = self.bm25.get_scores(tokenized_query)
             top_k_bm25 = np.argsort(bm25_scores)[::-1][:k]
             
-            chunk_max_lex = max(bm25_scores) if len(bm25_scores) > 0 else 0
-            
-            # Normalize BM25 assuming ~30.0 is a very high match
-            norm_lex = min(1.0, chunk_max_lex / 30.0)
-            
-            # Blend lexical and semantic
-            chunk_overall = max(chunk_max_sem, norm_lex)
-            if chunk_overall > max_score_overall:
-                max_score_overall = chunk_overall
+            if chunk_max_sem > max_score_overall:
+                max_score_overall = chunk_max_sem
                 
-            if chunk_overall > 0.85: # Threshold for high confidence plagiarism
+            if chunk_max_sem > 0.85: # Threshold for high confidence plagiarism
                 highly_plagiarized_chunks += 1
             
             for idx in top_k_bm25:
@@ -147,7 +140,7 @@ class PlagiarismDetector:
                 if r["type"] == "Semantic":
                     sim_pct = max(0.0, min(100.0, ((r["score"] - 0.45) / 0.55) * 100.0))
                 else:
-                    sim_pct = min(100.0, (r["score"] / 30.0) * 100.0)
+                    sim_pct = r["exact_match_percentage"] # Use exact match percentage for lexical similarity instead of arbitrary BM25 scale
                     
                 r["consecutive_percentage"] = consecutive_pct
                 r["exact_match"] = exact_match_str

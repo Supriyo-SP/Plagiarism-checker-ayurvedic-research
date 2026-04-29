@@ -22,14 +22,16 @@ def load_detector():
             texts_dir = os.path.join(base_dir, "data", "texts")
             chunks_file = os.path.join(base_dir, "data", "chunks.json")
             
-            # Automatically extract raw text from any PDFs uploaded to the corpus
-            if os.path.exists(pdf_dir):
+            # Only extract and process if there are PDFs present
+            pdf_files = [f for f in os.listdir(pdf_dir) if f.endswith('.pdf')] if os.path.exists(pdf_dir) else []
+            if pdf_files:
                 extract_all(pdf_dir, texts_dir)
+                process_all(texts_dir, chunks_file)
+            elif not os.path.exists(chunks_file):
+                st.warning("⚠️ No PDFs found and no pre-processed chunks available. Please add PDFs and click Rebuild Database.")
+                return None
                 
-            # Preprocess the data into canonical chunks
-            process_all(texts_dir, chunks_file)
-            
-            # Build embeddings and FAISS/BM25 indexes
+            # Build embeddings and FAISS/BM25 indexes from chunks
             build_index(chunks_file, index_dir)
             
             if not os.path.exists(os.path.join(index_dir, "vector.index")):
@@ -129,8 +131,11 @@ def main():
             from pipeline.preprocess import process_all
             from pipeline.index import build_index
             
-            extract_all(pdf_dir, texts_dir)
-            process_all(texts_dir, chunks_file)
+            pdf_files = [f for f in os.listdir(pdf_dir) if f.endswith('.pdf')] if os.path.exists(pdf_dir) else []
+            if pdf_files:
+                extract_all(pdf_dir, texts_dir)
+                process_all(texts_dir, chunks_file)
+                
             build_index(chunks_file, index_dir)
             
             st.sidebar.success("Database Rebuilt Successfully!")
