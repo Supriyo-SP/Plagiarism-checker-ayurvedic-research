@@ -66,7 +66,7 @@ An advanced, AI-powered Plagiarism Detection Tool specifically tailored for Ayur
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repo-url>
+   git clone "https://github.com/Supriyo-SP/Plagiarism-checker-ayurvedic-research"
    cd "Ayurvedic plagiarism checker"
    ```
 

@@ -114,7 +114,7 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<h1 style='text-align: center; text-transform: uppercase;'>[ Ayurvedic Plagiarism Engine // v4.0 ]</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; text-transform: uppercase;'>[Plagiarism Engine // v5.0 ]</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #777 !important;'>Semantic + Lexical Signal Detection Grid</p><hr/>", unsafe_allow_html=True)
     
     # Add Sidebar for Rebuilding Index (Must be placed before detector check so it is always accessible)
