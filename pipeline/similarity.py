@@ -140,7 +140,7 @@ class PlagiarismDetector:
                 if r["type"] == "Semantic":
                     sim_pct = max(0.0, min(100.0, ((r["score"] - 0.45) / 0.55) * 100.0))
                 else:
-                    sim_pct = r["exact_match_percentage"] # Use exact match percentage for lexical similarity instead of arbitrary BM25 scale
+                    sim_pct = exact_match_pct # Use exact match percentage for lexical similarity instead of arbitrary BM25 scale
                     
                 r["consecutive_percentage"] = consecutive_pct
                 r["exact_match"] = exact_match_str
