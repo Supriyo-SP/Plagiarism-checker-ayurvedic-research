@@ -28,6 +28,10 @@ class PlagiarismDetector:
         if not self.metadata:
             return {"overall_score": 0, "top_matches": []}
             
+        from pipeline.preprocess import remove_references, normalize_text
+        query_text = remove_references(query_text)
+        query_text = normalize_text(query_text)
+        
         # Chunk the query to match the indexing strategy
         query_words = query_text.split()
         chunk_size = 250
